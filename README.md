@@ -1,1 +1,1 @@
-# seattle-walks-parks
+# Seattle-Walk-to-Parks
