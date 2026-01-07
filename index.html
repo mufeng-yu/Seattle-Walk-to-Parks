@@ -1,12 +1,97 @@
 <!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Seattle Walks + Parks</title>
-  </head>
-  <body>
-    <h1>Seattle Walks + Parks</h1>
-    <p>Work in progress.</p>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Seattle Walks + Parks</title>
+
+  <!-- MapLibre CSS -->
+  <link
+    href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+    rel="stylesheet"
+  />
+
+  <style>
+    html, body { height: 100%; margin: 0; }
+    #app { height: 100%; display: flex; }
+
+    #map { flex: 1; }
+
+    #panel {
+      width: 340px;
+      padding: 16px;
+      box-sizing: border-box;
+      border-left: 1px solid #ddd;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow: auto;
+      background: #fff;
+    }
+
+    .small { font-size: 12px; color: #555; line-height: 1.4; }
+    .row { margin: 12px 0; }
+    label { display: block; font-size: 12px; margin-bottom: 6px; color: #333; }
+    input[type="range"] { width: 100%; }
+    #status { padding: 8px 10px; background: #f6f6f6; border: 1px solid #e5e5e5; border-radius: 6px; }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div id="map"></div>
+
+    <div id="panel">
+      <h2 style="margin: 0 0 6px 0;">Seattle Walks + Parks</h2>
+      <div class="small">
+        A heat-aware walkability prototype. This page will show cooler, more comfortable walking segments and routes.
+      </div>
+
+      <div class="row">
+        <div id="status" class="small">
+          Loading map…
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="threshold">Show segments with score ≥ <span id="thresholdValue">0</span></label>
+        <input id="threshold" type="range" min="0" max="30" step="1" value="0" />
+        <div class="small">V1 control: filter by score threshold.</div>
+      </div>
+
+      <div class="row small">
+        <strong>Data notes</strong><br/>
+        V1 will use: heat + trees/canopy + sidewalk presence.<br/>
+        Later: shade/time-of-day, routing, and equity layers.
+      </div>
+    </div>
+  </div>
+
+  <!-- MapLibre JS -->
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+
+  <script>
+    // Minimal basemap using a public demo style.
+    // Later we can switch to a better basemap and your own data layer.
+    const map = new maplibregl.Map({
+      container: "map",
+      style: "https://demotiles.maplibre.org/style.json",
+      center: [-122.335167, 47.608013], // Seattle downtown
+      zoom: 11
+    });
+
+    map.addControl(new maplibregl.NavigationControl(), "top-left");
+
+    const statusEl = document.getElementById("status");
+    map.on("load", () => {
+      statusEl.textContent = "Map loaded. Next: add your scored street layer.";
+    });
+
+    // Slider UI wiring (we'll connect this to your data layer later)
+    const threshold = document.getElementById("threshold");
+    const thresholdValue = document.getElementById("thresholdValue");
+    threshold.addEventListener("input", () => {
+      thresholdValue.textContent = threshold.value;
+      // Later: apply filter to your street layer
+    });
+  </script>
+</body>
 </html>
