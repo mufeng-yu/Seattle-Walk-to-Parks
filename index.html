@@ -81,17 +81,77 @@
     map.addControl(new maplibregl.NavigationControl(), "top-left");
 
     const statusEl = document.getElementById("status");
-    map.on("load", () => {
-      statusEl.textContent = "Map loaded. Next: add your scored street layer.";
+map.on("load", async () => {
+  try {
+    const res = await fetch("./data/demo_segments.geojson");
+    const geojson = await res.json();
+
+    map.addSource("segments", {
+      type: "geojson",
+      data: geojson
     });
+
+    map.addLayer({
+      id: "segments-line",
+      type: "line",
+      source: "segments",
+      paint: {
+        "line-width": 4,
+        "line-opacity": 0.85,
+        "line-color": [
+          "interpolate",
+          ["linear"],
+          ["get", "score"],
+          0, "#2c7bb6",
+          10, "#abd9e9",
+          20, "#fdae61",
+          30, "#d7191c"
+        ]
+      }
+    });
+
+    statusEl.textContent = "Demo segments loaded. Use the slider to filter by score.";
+
+    // Tooltip
+    const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
+
+    map.on("mousemove", "segments-line", (e) => {
+      map.getCanvas().style.cursor = "pointer";
+      const f = e.features && e.features[0];
+      if (!f) return;
+
+      const score = f.properties.score;
+      const id = f.properties.id;
+
+      popup
+        .setLngLat(e.lngLat)
+        .setHTML(`<div style="font-size:12px;"><strong>${id}</strong><br/>Score: ${score}</div>`)
+        .addTo(map);
+    });
+
+    map.on("mouseleave", "segments-line", () => {
+      map.getCanvas().style.cursor = "";
+      popup.remove();
+    });
+
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = "Failed to load demo segments. Check file path: /data/demo_segments.geojson";
+  }
+});
 
     // Slider UI wiring (we'll connect this to your data layer later)
     const threshold = document.getElementById("threshold");
     const thresholdValue = document.getElementById("thresholdValue");
-    threshold.addEventListener("input", () => {
-      thresholdValue.textContent = threshold.value;
-      // Later: apply filter to your street layer
-    });
+threshold.addEventListener("input", () => {
+  const v = parseInt(threshold.value, 10);
+  thresholdValue.textContent = String(v);
+
+  // Only apply filter if the layer exists
+  if (map.getLayer("segments-line")) {
+    map.setFilter("segments-line", [">=", ["get", "score"], v]);
+  }
+});
   </script>
 </body>
 </html>
